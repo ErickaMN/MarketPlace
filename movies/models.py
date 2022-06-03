@@ -39,7 +39,7 @@ class Comment (models.Model):
     created_at=models.DateTimeField(auto_now_add=True)
 
     def __str__(self)->str:
-        return f'{self.owner}->{self.post}->{self.created_at}'
+        return f'{self.owner}->{self.movie}->{self.created_at}'
 
 
 class Likes (models.Model):

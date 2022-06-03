@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-import movies
 from .models import Genre, Movie, Comment
 
 
@@ -24,9 +23,9 @@ class MovieSerializer(serializers.ModelSerializer):
         representation['likes_count'] = instance.likes.count()
         return representation
 
-    def is_liked(self, post):
+    def is_liked(self, movie):
         user = self.context.get('request').user
-        return user.liked.filter(movie=movies).exists()
+        return user.liked.filter(movie=movie).exists()
 
 
 class CommentSerializer(serializers.ModelSerializer):
