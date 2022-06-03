@@ -32,4 +32,4 @@ class CommentSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
     class Meta:
         model = Comment
-        fields = ('id', 'body', 'owner', 'post')
+        fields = ('id', 'body', 'owner', 'movie')
