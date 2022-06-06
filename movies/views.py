@@ -5,6 +5,7 @@ from django.shortcuts import render
 
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -102,6 +103,11 @@ class CommentListCreateView(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
     serializer_class = serializers.CommentSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    #
+    # def post(self, request, *args, **kwargs):
+    #     print(request)
+    #     return self.create(request, *args, **kwargs)
+    #
 
     def perform_create(self, serializer):
         return serializer.save(owner=self.request.user)
