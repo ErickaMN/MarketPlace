@@ -39,7 +39,7 @@ class MasterFavoritSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Favorite
-        fields = 'all'
+        fields = '__all__'
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

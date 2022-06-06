@@ -41,9 +41,9 @@ class MovieViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve', 'search', 'genre']:
+        if self.action in ['list', 'retrieve', 'search', 'genres']:
             return [permissions.AllowAny(),]
-        elif self.action in ['add_to_liked', 'remove_from_liked']:
+        elif self.action in ['add_to_liked', 'remove_from_liked', 'add_to_favorites', 'remove_from_favorites']:
             return [permissions.IsAuthenticatedOrReadOnly(),]
         else:
             return [permissions.IsAdminUser(),]
@@ -54,20 +54,20 @@ class MovieViewSet(viewsets.ModelViewSet):
         else:
             return serializers.MovieSerializer
 
-    @action(detail=False, methods=['get'])
-    def genre(self, request, ):
-        queryset = self.get_queryset()
-        queryset = queryset.filter(genre=self.genre)
-        serializer = MovieSerializer(queryset, many=True, request=request)
-        return Response(serializer.data)
-
     # @action(detail=False, methods=['get'])
-    # def genres(self, request, pk=None):
-    #     genres = request.query_params.get('genres')
+    # def genre(self, request):
     #     queryset = self.get_queryset()
-    #     queryset = queryset.filter(Q(genre__icontains=genres))
-    #     serializer = MovieSerializer(queryset, many=True, context={'request': request})
+    #     queryset = queryset.filter(genre=self.genre)
+    #     serializer = MovieSerializer(queryset, many=True, request=request)
     #     return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def genres(self, request, pk=None):
+        genre = request.query_params.get('genre')
+        queryset = self.get_queryset()
+        queryset = queryset.filter(genre=genre)
+        serializer = MovieSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
 
     # def perform_create(self, serializer):
     #     serializer.save(owner=self.request.user)
@@ -97,6 +97,22 @@ class MovieViewSet(viewsets.ModelViewSet):
             return Response('Вы не лайкали пост', status=status.HTTP_400_BAD_REQUEST)
         request.user.liked.filter(movie=movie).delete()
         return Response('Ваш лайк удален', status=status.HTTP_204_NO_CONTENT)
+
+    @action(['POST'], detail=True)
+    def add_to_favorites(self, request, pk):
+        movie = self.get_object()
+        if request.user.favorites.filter(movie=movie).exists():
+            return Response('u have already added this movie to favorites', status=status.HTTP_400_BAD_REQUEST)
+        Favorite.objects.create(movie=movie, user=request.user)
+        return Response('You added it to favorites', status=status.HTTP_201_CREATED)
+
+    @action(['POST'], detail=True)
+    def remove_from_favorites(self, request, pk):
+        movie = self.get_object()
+        if not request.user.favorites.filter(movie=movie).exists():
+            return Response('u haven\'t added it to favorites', status=status.HTTP_400_BAD_REQUEST)
+        request.user.favorites.filter(movie=movie, ).delete()
+        return Response('The movie is removed from favorites', status=status.HTTP_204_NO_CONTENT)
 
 
 class CommentListCreateView(generics.ListCreateAPIView):
@@ -128,21 +144,6 @@ class UserFavoriteList(APIView):
         serializer = serializers.MasterFavoritSerializer(movie, many=True).data
         return Response(serializer)
 
-    @action(['POST'], detail=True)
-    def add_to_favorites(self, request, pk):
-        movie = self.get_object()
-        if request.user.favorites.filter(movie=movie).exists():
-            return Response('u have already added this movie to favorites', status=status.HTTP_400_BAD_REQUEST)
-        Favorite.objects.create(movie=movie, user=request.user)
-        return Response('You added it to favorites', status=status.HTTP_201_CREATED)
-
-    @action(['POST'], detail=True)
-    def remove_from_favorites(self, request, pk):
-        movie = self.get_object()
-        if not request.user.favorites.filter(movie=movie).exists():
-            return Response('u haven\'t added it to favorites', status=status.HTTP_400_BAD_REQUEST)
-        request.user.favorites.filter(movie=movie, ).delete()
-        return Response('The movie is removed from favorites', status=status.HTTP_204_NO_CONTENT)
 
 
 
