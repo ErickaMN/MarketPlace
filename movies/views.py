@@ -6,10 +6,11 @@ from django.shortcuts import render
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 import movies
 from movies import serializers
-from movies.models import Genre, Movie, Comment, Likes
+from movies.models import Genre, Movie, Comment, Likes, Favorite
 from movies.serializers import GenreSerializer, MovieSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
@@ -41,7 +42,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve', 'search', 'genre']:
             return [permissions.AllowAny(),]
-        elif self.action in ['comments', 'add_to_liked', 'remove_from_liked']:
+        elif self.action in ['add_to_liked', 'remove_from_liked']:
             return [permissions.IsAuthenticatedOrReadOnly(),]
         else:
             return [permissions.IsAdminUser(),]
@@ -71,12 +72,12 @@ class MovieViewSet(viewsets.ModelViewSet):
     #     serializer.save(owner=self.request.user)
 
     #api/v1/posts/<id>/comments/
-    @action(['GET'], detail=True)
-    def comments (self, request, pk):
-        movie = self.get_object()
-        comments = movie.comments.all()
-        serializer = serializers.CommentSerializer(comments, many=True)
-        return Response (serializer.data)
+    # @action(['GET'], detail=True)
+    # def comments (self, request, pk):
+    #     movie = self.get_object()
+    #     comments = movie.comments.all()
+    #     serializer = serializers.CommentSerializer(comments, many=True)
+    #     return Response (serializer.data)
 
     #api/v1/posts/<id>/add_to_likes/
     @action(['POST'], detail=True)
@@ -112,6 +113,30 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
+class UserFavoriteList(APIView):
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+    def get(self, request):
+        user = request.user
+        movie = user.favorites.all()
+        serializer = serializers.MasterFavoritSerializer(movie, many=True).data
+        return Response(serializer)
+
+    @action(['POST'], detail=True)
+    def add_to_favorites(self, request, pk):
+        movie = self.get_object()
+        if request.user.favorites.filter(movie=movie).exists():
+            return Response('u have already added this movie to favorites', status=status.HTTP_400_BAD_REQUEST)
+        Favorite.objects.create(movie=movie, user=request.user)
+        return Response('You added it to favorites', status=status.HTTP_201_CREATED)
+
+    @action(['POST'], detail=True)
+    def remove_from_favorites(self, request, pk):
+        movie = self.get_object()
+        if not request.user.favorites.filter(movie=movie).exists():
+            return Response('u haven\'t added it to favorites', status=status.HTTP_400_BAD_REQUEST)
+        request.user.favorites.filter(movie=movie, ).delete()
+        return Response('The movie is removed from favorites', status=status.HTTP_204_NO_CONTENT)
 
 
 

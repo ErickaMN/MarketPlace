@@ -51,4 +51,5 @@ urlpatterns = [
     path('v1/api/movies/comments/', views.CommentListCreateView.as_view()),
     path('v1/api/movies/comments/<int:pk>/', views.CommentDetailView.as_view()),
     path('v1/api/ratings/', include('ratings.urls')),
+    path('v1/api/favorites/', views.UserFavoriteList.as_view()),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

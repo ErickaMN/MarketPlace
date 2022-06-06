@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Genre, Movie, Comment
+from .models import Genre, Movie, Comment, Favorite
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -33,3 +33,16 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ('id', 'body', 'owner', 'movie')
+
+
+class MasterFavoritSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Favorite
+        fields = 'all'
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = instance.user.email
+        representation['movie'] = instance.movie.title
+        return representation

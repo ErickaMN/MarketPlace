@@ -50,4 +50,9 @@ class Likes (models.Model):
         unique_together = ['movie', 'user']
 
 
+class Favorite(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='favorites')
+
+
 
